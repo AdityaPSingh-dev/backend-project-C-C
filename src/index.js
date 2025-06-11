@@ -20,4 +20,12 @@ const app = express();
 //     throw err;
 //   }
 // })();
-connectDB();
+connectDB()
+  .then(() => {
+    app.listen(process.env.PORT || 5000, () => {
+      console.log(`Server is running on port ${process.env.PORT}`);
+    });
+  })
+  .catch((err) => {
+    console.log("ERROR WHILE CONNECTING TO MONGO DB", err);
+  });
