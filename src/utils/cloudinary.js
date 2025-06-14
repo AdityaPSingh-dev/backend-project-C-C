@@ -1,27 +1,40 @@
 import { v2 as cloudinary } from "cloudinary";
-import fs from "fs"; // file system manager native to NODE JS
+import fs from "fs";
+import path from "path";
+import dotenv from "dotenv";
+dotenv.config();
 
-// Configuration
+// Cloudinary config
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
+
 const uploadOnCloudinary = async (localFilePath) => {
   try {
     if (!localFilePath) {
+      console.warn("No local file path provided.");
       return null;
     }
-    //upload file on cloudinary
-    const response = await cloudinary.uploader.upload(localFilePath, {
+
+    const absolutePath = path.resolve(localFilePath); // Normalize for Windows
+
+    const response = await cloudinary.uploader.upload(absolutePath, {
       resource_type: "auto",
     });
 
-    //file has been uploaded successfully
-    console.log("File has been uploaded successfully", response.url);
+    console.log("✅ File uploaded successfully:", response.secure_url);
+
+    fs.unlinkSync(absolutePath); // Cleanup
     return response;
   } catch (error) {
-    fs.unlinkSync(localFilePath); //remove the locally saved temporary file as the upload operation got failed
+    console.error("❌ Cloudinary upload failed:", error.message);
+
+    if (fs.existsSync(localFilePath)) {
+      fs.unlinkSync(localFilePath);
+    }
+
     return null;
   }
 };
